@@ -50,7 +50,7 @@ if(!isset($_SESSION["join"])){
 		<dt>写真など</dt>
 		<dd>
 			<?php if($_SESSION["join"]["image"] !== ""):?>
-			<img src="../member_picture/<?php print(h($SESSION["join"]["image"])) ;?>" alt="アップロードした画像">
+			<img src="../member_picture/<?php print(h($_SESSION["join"]["image"])) ;?>" alt="アップロードした画像">
 			<?php endif ;?>
 		</dd>
 	</dl>
