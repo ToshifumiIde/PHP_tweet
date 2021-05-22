@@ -1,4 +1,7 @@
 <?php
+session_start();//sessionをstart
+//sessionに値を保存するのはheader()関数の直前
+
 
 //h関数の作成
 function h($str){
@@ -35,10 +38,18 @@ if(!empty($_POST)){
 	
 	// if(!empty($_POST["email"]) && !empty($_POST["email"]) && !empty($_POST["password"])){
 		if(empty($error)){
-		header("Location: check.php");//index.phpに移動
+		$_SESSION["join"] = $_POST;//POSTで受け取った配列を丸ごと渡す。
+		header("Location: check.php");//check.phpに移動
 		exit();
 	}
 }
+
+//check.phpからindex.phpに遷移するタイミングでhref="index.php?action=rewrite"とactionにrewriteを設定している。
+//$_SESSION["join"]でSESSIONが正しくチェックされているか確認する。
+if($_REQUEST["action"] == "rewrite" && isset($_SESSION["join"])){
+	$_POST = $_SESSION["join"];//SESSIONに格納されている値を$_POSTに代入する。
+}
+
 ?>
 
 

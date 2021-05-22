@@ -1,3 +1,19 @@
+<?php
+session_start();
+
+function h($str){
+	return htmlspecialchars($str , ENT_QUOTES);
+}
+
+//入力画面を通過したか（必要事項が入力されたか）確認
+if(!isset($_SESSION["join"])){
+	header("Location: index.php");//正しい手順で入力されていない場合、index.phpに戻す
+	exit();
+}
+
+
+?>
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -21,10 +37,12 @@
 	<dl>
 		<dt>ニックネーム</dt>
 		<dd>
-        </dd>
+      <?php print(h($_SESSION["join"]["name"]))?>
+			</dd>
 		<dt>メールアドレス</dt>
 		<dd>
-        </dd>
+		<?php print(h($_SESSION["join"]["email"]))?>
+    </dd>
 		<dt>パスワード</dt>
 		<dd>
 		【表示されません】
