@@ -1,16 +1,35 @@
 <?php
 session_start();
+require("../dbconnect.php");//dbへの情報登録のために、requireしておく
 
+
+//文字入力が安全かどうか確認
 function h($str){
 	return htmlspecialchars($str , ENT_QUOTES);
 }
 
-//入力画面を通過したか（必要事項が入力されたか）確認
+//入力画面を通過したか（必要事項が入力されたか）確認。必要事項が入力されていない場合、
+//何も入力されていない場合、index.phpに戻す。
 if(!isset($_SESSION["join"])){
 	header("Location: index.php");//正しい手順で入力されていない場合、index.phpに戻す
 	exit();
 }
 
+//DBへの接続確認処理は$_POSTがあるかどうか確認
+if(!empty($_POST)){
+	//dbへのデータ登録には、prepare()関数を使う。
+	$statement = $db->prepare('INSERT INTO members SET name=?, email=?, password=?, picture=?, created=NOW()');
+	//prepareで用意したstringの実行
+	$statement->execute(array(
+		$_SESSION["join"]["name"],
+		$_SESSION["join"]["email"],
+		sha1($_SESSION["join"]["password"]),
+		$_SESSION["join"]["image"],
+	));
+	unset($_SESSION["join"]);//不要な$_SESSIONの情報は、登録し終えたらすぐに削除する
+	header("Location: thanks.php");
+	exit();
+}
 
 ?>
 
@@ -34,6 +53,7 @@ if(!isset($_SESSION["join"])){
 <p>記入した内容を確認して、「登録する」ボタンをクリックしてください</p>
 <form action="" method="post">
 	<input type="hidden" name="action" value="submit" />
+	<!-- 送信の隠し要素 -->
 	<dl>
 		<dt>ニックネーム</dt>
 		<dd>
