@@ -13,21 +13,28 @@ if(!empty($_POST)){
     $login->execute(array(
       $_POST["email"],
       sha1($_POST["password"])
-      //sha1を用いてpasswordを暗号化したため、sha1を用いてこちらも暗号化する。
-      //sha1を用いた暗号化は、同じ文字列であれば同じ暗号結果を返す。
     ));
+    //sha1を用いてpasswordを暗号化したため、sha1を用いてこちらも暗号化する。
+    //sha1を用いた暗号化は、同じ文字列であれば同じ暗号結果を返す。
     $member = $login->fetch();//ユーザーが入力したemailとpasswordのデータをDBから引っ張ってくる。
     //メンバーが存在していたら
     if($member){
+      header('Location: index.php');
       $_SESSION["id"] = $member("id");
-      $_SESSION["time"] = time();//現在時刻を格納
+      $_SESSION["time"] = time();
+      //header()関数は、実行前に別の処理を入れない。入れるとエラー。半角空白などもNG。
       //sessionにはpasswordは保存しない。cookieよりは安全性があるが、sessionハイジャックといったことも起こりうる。
-      header("Location: index.php");
+      // var_dump($member);
       exit();
+    } else {
+      //ログインに失敗した場合
+      $error["login"] = "failed";
     }
+  } else {
+    //$_POST["email"]か$_POST["password"]が空だった場合
+    $error["login"] = "blank";
   }
 }
-
 ?>
 
 
@@ -54,11 +61,17 @@ if(!empty($_POST)){
       <dl>
         <dt>メールアドレス</dt>
         <dd>
-          <input type="text" name="email" size="35" maxlength="255" value="<?php echo htmlspecialchars($_POST['email']); ?>" />
+          <input type="text" name="email" size="35" maxlength="255" value="<?php echo htmlspecialchars($_POST['email'] , ENT_QUOTES); ?>" />
+          <?php if($error["login"] === "blank"):?>
+          <p class="error">*メールアドレスとパスワードの両方を入力してください</p>
+          <?php endif ;?>
+          <?php if($error["login"] === "failed"):?>
+          <p class="error">*ログインに失敗しました。メールアドレスとパスワードをご確認ください。</p>
+          <?php endif ;?>
         </dd>
         <dt>パスワード</dt>
         <dd>
-          <input type="password" name="password" size="35" maxlength="255" value="<?php echo htmlspecialchars($_POST['password']); ?>" />
+          <input type="password" name="password" size="35" maxlength="255" value="<?php echo htmlspecialchars($_POST['password'] , ENT_QUOTES); ?>" />
         </dd>
         <dt>ログイン情報の記録</dt>
         <dd>
