@@ -2,8 +2,14 @@
 require("./dbconnect.php");//DB接続実施
 session_start();//ログイン情報の変数をsessionに保存しておきたいので、session_start()を実行
 
+//クッキーにemailが格納されていた場合
+if($_COOKIE["email"] !== ""){
+  $email = $_COOKE["email"];//変数に$_COOKIE["email"]を格納
+}
+
 //そもそもデータがPOSTされているか確認
 if(!empty($_POST)){
+  $email = $_POST["email"];
   //データPOSTされている場合、emailとpasswordが空でなかった場合に、
   //ユーザーから入力されたemailとpasswordに合致する、DB上のemailとpasswordの情報を引っ張ってくる。
   if($_POST["email"] !== "" && $_POST["password"] !== ""){
@@ -19,12 +25,18 @@ if(!empty($_POST)){
     $member = $login->fetch();//ユーザーが入力したemailとpasswordのデータをDBから引っ張ってくる。
     //メンバーが存在していたら
     if($member){
+      if($_POST["save"] === "on"){
+        setcookie("email" , $_POST["email"] , time()+60*60*24*14);
+        //クッキー（ブラウザ）にログイン情報を保存しておく。
+        //現在時刻より14日間cookieの"email"という変数に$_POST["email"]を格納する。
+      }
       header('Location: index.php');
       $_SESSION["id"] = $member("id");
       $_SESSION["time"] = time();
       //header()関数は、実行前に別の処理を入れない。入れるとエラー。半角空白などもNG。
       //sessionにはpasswordは保存しない。cookieよりは安全性があるが、sessionハイジャックといったことも起こりうる。
       // var_dump($member);
+
       exit();
     } else {
       //ログインに失敗した場合
@@ -61,7 +73,7 @@ if(!empty($_POST)){
       <dl>
         <dt>メールアドレス</dt>
         <dd>
-          <input type="text" name="email" size="35" maxlength="255" value="<?php echo htmlspecialchars($_POST['email'] , ENT_QUOTES); ?>" />
+          <input type="text" name="email" size="35" maxlength="255" value="<?php echo htmlspecialchars($email , ENT_QUOTES); ?>" />
           <?php if($error["login"] === "blank"):?>
           <p class="error">*メールアドレスとパスワードの両方を入力してください</p>
           <?php endif ;?>
