@@ -1,3 +1,36 @@
+<?php
+require("./dbconnect.php");//DB接続実施
+session_start();//ログイン情報の変数をsessionに保存しておきたいので、session_start()を実行
+
+//そもそもデータがPOSTされているか確認
+if(!empty($_POST)){
+  //データPOSTされている場合、emailとpasswordが空でなかった場合に、
+  //ユーザーから入力されたemailとpasswordに合致する、DB上のemailとpasswordの情報を引っ張ってくる。
+  if($_POST["email"] !== "" && $_POST["password"] !== ""){
+    $login = $db->prepare("SELECT * FROM members WHERE email=? AND password=?");
+    //membersからemailとpasswordをprepare文で選択する。
+    //emailとpasswordの中身は、executeでユーザーが入力したemailとpasswordを格納する。
+    $login->execute(array(
+      $_POST["email"],
+      sha1($_POST["password"])
+      //sha1を用いてpasswordを暗号化したため、sha1を用いてこちらも暗号化する。
+      //sha1を用いた暗号化は、同じ文字列であれば同じ暗号結果を返す。
+    ));
+    $member = $login->fetch();//ユーザーが入力したemailとpasswordのデータをDBから引っ張ってくる。
+    //メンバーが存在していたら
+    if($member){
+      $_SESSION["id"] = $member("id");
+      $_SESSION["time"] = time();//現在時刻を格納
+      //sessionにはpasswordは保存しない。cookieよりは安全性があるが、sessionハイジャックといったことも起こりうる。
+      header("Location: index.php");
+      exit();
+    }
+  }
+}
+
+?>
+
+
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>

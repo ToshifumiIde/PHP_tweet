@@ -24,16 +24,16 @@ if(!empty($_POST)){
 	//$_POST["name"]には、ユーザーが入力したname="name"のvalueが格納される。
 	
 	if($_POST["name"] ===""){
-		$error["name"] = "blank";//error配列を準備し、["name"]内に追加
+		$error["name"] = "blank";//error配列を準備し、["name"]内にblankを追加
 	}
 	if($_POST["email"] ===""){
-		$error["email"] = "blank";//error配列を準備し、["name"]内に追加
+		$error["email"] = "blank";//error配列を準備し、["name"]内にblankを追加
 	}
 	if($_POST["password"] ===""){
-		$error["password"] = "blank";//error配列を準備し、["name"]内に追加
+		$error["password"] = "blank";//error配列を準備し、["name"]内にblankを追加
 	}
 	if(strlen($_POST["password"]) < 4){
-		$error["password"] = "length";
+		$error["password"] = "length";//$_POST["password"]の数が4未満の場合、$error配列の["password"]内にlengthを追加
 	}
 	//エラーメッセージの表示は名前の下に実施したいが、
 	//このif文ごとhtmlの名前入力欄の下に持っていくと、後でSESSIONを使えなくなるから、
@@ -52,9 +52,9 @@ if(!empty($_POST)){
 	if(empty($error)){
 		$member = $db->prepare("SELECT COUNT(*) AS cnt FROM members WHERE email=?");
 		$member->execute(array($_POST["email"]));
-		$record = $member->fetch();
+		$record = $member->fetch();//fetchメソッドで取り出す。存在すれば1。存在しなければ0を返却
 		if($record["cnt"] > 0){
-			$error["email"] = "duplicate";
+			$error["email"] = "duplicate";//errorの["email"]にduplicateを格納
 		}
 	}
 
