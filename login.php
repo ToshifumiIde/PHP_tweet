@@ -30,13 +30,12 @@ if(!empty($_POST)){
         //クッキー（ブラウザ）にログイン情報を保存しておく。
         //現在時刻より14日間cookieの"email"という変数に$_POST["email"]を格納する。
       }
-      header('Location: index.php');
-      $_SESSION["id"] = $member("id");
+      $_SESSION["id"] = $member["id"];//()ではなく、[]である点に注意。
       $_SESSION["time"] = time();
       //header()関数は、実行前に別の処理を入れない。入れるとエラー。半角空白などもNG。
       //sessionにはpasswordは保存しない。cookieよりは安全性があるが、sessionハイジャックといったことも起こりうる。
       // var_dump($member);
-
+      header('Location: index.php');
       exit();
     } else {
       //ログインに失敗した場合

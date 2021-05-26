@@ -1,3 +1,24 @@
+<?php
+session_start();//sessionの利用開始
+require("dbconnect.php");
+//DBへのアクセスが必要なため、dbconnect.phpをrequireしておく。
+
+//$_SESSION["id"]が存在し、時間が
+if($_SESSION["id"] && $_SESSION["time"] + 3600 > time()){
+  $_SESSION["time"] = time();//現在時刻を上書きして格納
+  $members = $db->prepare("SELECT * FROM members WHERE id=?");
+  $members->execute(array($_SESSION["id"]));
+  $member = $members->fetch();//現在取得できたデータを保存している
+  //ログインしているユーザーの情報がDBから引き出された。
+} else {
+  header("Location: login.php");
+  //ログインが完了していない場合、ログイン画面に強制的に移動
+  exit();
+}
+
+?>
+
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -18,7 +39,7 @@
   	<div style="text-align: right"><a href="logout.php">ログアウト</a></div>
     <form action="" method="post">
       <dl>
-        <dt>○○さん、メッセージをどうぞ</dt>
+        <dt><?php print(htmlspecialchars($member["name"],ENT_QUOTES));?>さん、メッセージをどうぞ</dt>
         <dd>
           <textarea name="message" cols="50" rows="5"></textarea>
           <input type="hidden" name="reply_post_id" value="" />
