@@ -33,8 +33,12 @@ if(!empty($_POST)){//POSTが空でなければ中の処理に移動。
   }
 }
 
-$posts = $db->query("SELECT m.name, m.picture,p.* FROM members m, posts p WHERE m.id=p.member_id ORDER BY p.created DESC");//ユーザーが入力した値を呼び出すわけではないため、prepareではなく、queryを用いての呼び出しで構わない。
-
+//DBからreadする機能の追加
+$posts = $db->query("SELECT m.name, m.picture, p.* FROM members m, posts p WHERE m.id=p.member_id ORDER BY p.created DESC");
+//ユーザーが入力した値を呼び出すわけではないため、prepareではなく、queryを用いての呼び出しで構わない。
+//今回はreadのため、SELECT文を使用。
+//members.nameとmembers.pictureを呼び出す。members.idとposts.member_idとが合致するところから。リレーションして取得する。
+//今回はmembersとpostsにそれぞれmとpのショートカット（エイリアス）をつけているため、mとpで呼び出しが可能。
 ?>
 
 
@@ -73,16 +77,33 @@ $posts = $db->query("SELECT m.name, m.picture,p.* FROM members m, posts p WHERE 
       </div>
     </form>
 
-    <div class="msg">
-    <img src="member_picture" width="48" height="48" alt="" />
-    <p><span class="name">（）</span>[<a href="index.php?res=">Re</a>]</p>
-    <p class="day"><a href="view.php?id="></a>
-<a href="view.php?id=">
-返信元のメッセージ</a>
-[<a href="delete.php?id="
-style="color: #F33;">削除</a>]
+
+<!-- メッセージ表示開始箇所 -->
+<?php foreach($posts as $post): ?>
+  <div class="msg">
+    <img 
+      src="member_picture/<?php print(htmlspecialchars($post["picture"] , ENT_QUOTES));?>" 
+      width="48" 
+      height="48" 
+      alt="<?php print(htmlspecialchars($post["name"],ENT_QUOTES)) ;?>" 
+    />
+    <p>
+      <?php print(htmlspecialchars($post["message"] , ENT_QUOTES)) ;?><span class="name">（<?php print(htmlspecialchars($post["name"] , ENT_QUOTES))?>）</span>[<a href="index.php?res=">Re</a>]
     </p>
-    </div>
+    <p class="day">
+      <a href="view.php?id=">
+        <?php print(htmlspecialchars($post["created"] , ENT_QUOTES));?>
+      </a>
+      <a href="view.php?id=">
+        返信元のメッセージ
+      </a>
+      [<a href="delete.php?id=" style="color: #F33;">
+        削除
+      </a>]
+    </p>
+  </div>
+<?php endforeach ;?>
+<!-- メッセージ表示終了箇所 -->
 
 <ul class="paging">
 <li><a href="index.php?page=">前のページへ</a></li>
