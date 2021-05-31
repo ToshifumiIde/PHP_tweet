@@ -16,6 +16,25 @@ if($_SESSION["id"] && $_SESSION["time"] + 3600 > time()){
   exit();
 }
 
+if(!empty($_POST)){//POSTが空でなければ中の処理に移動。
+  if($_POST["message"] !== ""){//textareaのname="message"が空でなければDBにユーザーが入力したメッセージを登録する。
+    $message = $db->prepare("INSERT INTO posts SET member_id=?, message=?, created=NOW()");
+    //messageの追加なので、今回はINSERT INTO posts SET で開始。
+    //***必ず「,」で区切ること。***（エラーで2時間無駄にした）
+    //prepareでDBに接続し、IDやmessageは変数としてexecuteで値を格納する。
+    $message->execute(array(
+      $member["id"],//$_SESSION["id"]も同じ値だが、DBから取ってきた方が確実のため、$member["id"]で対応
+      $_POST["message"]
+    ));
+    //ちなみに$_POST["message"]にデータを持ち続けてしまうため、
+    //自分自身をもう一度呼び出し、POSTをリセットする。
+    header("Location: index.php");//index.phpを呼び出し$_POSTのデータをリセットしているため、再読み込みをしてもmessageが重複しない。
+    exit();
+  }
+}
+
+$posts = $db->query("SELECT m.name, m.picture,p.* FROM members m, posts p WHERE m.id=p.member_id ORDER BY p.created DESC");//ユーザーが入力した値を呼び出すわけではないため、prepareではなく、queryを用いての呼び出しで構わない。
+
 ?>
 
 
@@ -36,7 +55,9 @@ if($_SESSION["id"] && $_SESSION["time"] + 3600 > time()){
     <h1>ひとこと掲示板</h1>
   </div>
   <div id="content">
-  	<div style="text-align: right"><a href="logout.php">ログアウト</a></div>
+    <div style="text-align: right">
+      <a href="logout.php">ログアウト</a>
+    </div>
     <form action="" method="post">
       <dl>
         <dt><?php print(htmlspecialchars($member["name"],ENT_QUOTES));?>さん、メッセージをどうぞ</dt>
