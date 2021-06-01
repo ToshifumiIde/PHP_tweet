@@ -39,12 +39,39 @@ if(!empty($_POST)){
   }
 }
 
-//DBからreadする機能の追加
-$posts = $db->query("SELECT m.name, m.picture, p.* FROM members m, posts p WHERE m.id=p.member_id ORDER BY p.created DESC");
+//DBからreadする機能の追加//
+
+// paginationの設定追加。現在ページを取得。
+$page = $_REQUEST["page"];
+//pageに1以上の数字が入るように制限をかける。
+if($page == ""){
+  $page = 1;
+}
+//$pageに-1などの数字が入った場合、1に修正する。
+$page = max($page , 1);
+
+// DBに格納されているmessageの数を取得
+$counts = $db->query("SELECT COUNT(*) AS cnt FROM posts");
+$cnt = $counts->fetch();
+$maxPage = ceil($cnt["cnt"] / 5);//$cntの["cnt"]を5で割った値を切り上げ
+//開始ページの番号を変数に格納
+
+//maxPageで取得された以上の値が$pageに格納されない様に制限
+$page = min($page , $maxPage);
+
+$start = ($page - 1) * 5;
+
+
+$posts = $db->prepare("SELECT m.name, m.picture, p.* FROM members m, posts p WHERE m.id=p.member_id ORDER BY p.created DESC LIMIT ?,5");
 //ユーザーが入力した値を呼び出すわけではないため、prepareではなく、queryを用いての呼び出しでOK。
 //今回はreadのため、SELECT文で呼び出しのみ実行。
 //members.nameとmembers.pictureを呼び出す。members.idとposts.member_idとが合致するところから。リレーションして取得する。
 //今回はmembersとpostsにそれぞれmとpのショートカット（エイリアス）をつけているため、mとpで呼び出しが可能。
+//paginationを実装するため、呼び出す数を5件に制限する。0,5で実行可能。
+//paginationのパラメータをURLパラメータで随時変更できるように、?に変更。
+//合わせて、URLパラメータを実装するためquery()メソッドからprepare()メソッドに変更。
+$posts->bindParam(1,$start,PDO::PARAM_INT);
+$posts->execute();//paginationのpageを$postsに格納できてから、改めてexecute()を実行
 
 //?res= の部分がクリックされたら、つまりリクエストされたら返信の処理を実行
 if(isset($_REQUEST["res"])){
@@ -60,29 +87,31 @@ if(isset($_REQUEST["res"])){
 
 
 <!DOCTYPE html>
-<html lang="ja">
-<head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<meta http-equiv="X-UA-Compatible" content="ie=edge">
-	<title>ひとこと掲示板</title>
-
-	<link rel="stylesheet" href="style.css" />
-</head>
-
-<body>
-<div id="wrap">
-  <div id="head">
-    <h1>ひとこと掲示板</h1>
-  </div>
-  <div id="content">
-    <div style="text-align: right">
-      <a href="logout.php">ログアウト</a>
-    </div>
+  <html lang="ja">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta http-equiv="X-UA-Compatible" content="ie=edge">
+      <title>ひとこと掲示板</title>
+      <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+      <div id="wrap">
+        <div id="head">
+          <h1>
+            ひとこと掲示板
+          </h1>
+        </div>
+      <div id="content">
+        <div style="text-align: right">
+          <a href="logout.php">
+            ログアウト
+          </a>
+        </div>
     <form action="" method="post">
       <dl>
         <dt>
-        <?php print(htmlspecialchars($member["name"],ENT_QUOTES));?>さん、メッセージをどうぞ
+          <?php print(htmlspecialchars($member["name"],ENT_QUOTES));?>さん、メッセージをどうぞ
         </dt>
         <dd><textarea name="message" cols="50" rows="5"><?php print(htmlspecialchars($message , ENT_QUOTES)) ;?></textarea>
           <input type="hidden" name="reply_post_id" value="<?php print(htmlspecialchars($_REQUEST["res"],ENT_QUOTES))?>" />
@@ -130,8 +159,24 @@ if(isset($_REQUEST["res"])){
 <!-- メッセージ表示終了箇所 -->
 
 <ul class="paging">
-<li><a href="index.php?page=">前のページへ</a></li>
-<li><a href="index.php?page=">次のページへ</a></li>
+  <?php if($page > 1): ?>
+    <li>
+      <a href="index.php?page=<?php print($page - 1) ;?>">
+        前のページへ
+      </a>
+    </li>
+  <?php else: ?>
+    <li>前のページへ</li>
+  <?php endif; ?>
+  <?php if($page < $maxPage): ?>
+    <li>
+      <a href="index.php?page=<?php print($page + 1) ;?>">
+        次のページへ
+      </a>
+    </li>
+  <?php else: ?>
+    <li>次のページへ</li>
+  <?php endif; ?>
 </ul>
   </div>
 </div>
