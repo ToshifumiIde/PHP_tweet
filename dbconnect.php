@@ -8,6 +8,6 @@ try{
     "root"
   );
 } catch(PDOException $err){
-  print("DB接続エラー。エラー内容は" . $err->getMessage());
+  print("DB接続エラー。エラー内容は" . $err->getMessage() . "です。");
 }
 ?>

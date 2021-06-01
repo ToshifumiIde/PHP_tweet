@@ -3,7 +3,7 @@ session_start();//sessionの利用開始
 require("dbconnect.php");
 //DBへのアクセスが必要なため、dbconnect.phpをrequireしておく。
 
-//$_SESSION["id"]が存在し、時間が
+//$_SESSION["id"]が存在し、時間が1時間以上経過していた場合
 if($_SESSION["id"] && $_SESSION["time"] + 3600 > time()){
   $_SESSION["time"] = time();//現在時刻を上書きして格納
   $members = $db->prepare("SELECT * FROM members WHERE id=?");
@@ -16,15 +16,18 @@ if($_SESSION["id"] && $_SESSION["time"] + 3600 > time()){
   exit();
 }
 
-if(!empty($_POST)){//POSTが空でなければ中の処理に移動。
-  if($_POST["message"] !== ""){//textareaのname="message"が空でなければDBにユーザーが入力したメッセージを登録する。
-    $message = $db->prepare("INSERT INTO posts SET member_id=?, message=?, created=NOW()");
+//POSTが空でなければ中の処理に移動。
+if(!empty($_POST)){
+  if($_POST["message"] !== ""){
+    //textareaのname="message"が空でなければDBにユーザーが入力したメッセージを登録する。
+    $message = $db->prepare("INSERT INTO posts SET member_id=?, message=?, reply_message_id =?, created=NOW()");
     //messageの追加なので、今回はINSERT INTO posts SET で開始。
     //***必ず「,」で区切ること。***（エラーで2時間無駄にした）
     //prepareでDBに接続し、IDやmessageは変数としてexecuteで値を格納する。
     $message->execute(array(
       $member["id"],//$_SESSION["id"]も同じ値だが、DBから取ってきた方が確実のため、$member["id"]で対応
-      $_POST["message"]
+      $_POST["message"],
+      $_POST["reply_post_id"]
     ));
     //ちなみに$_POST["message"]にデータを持ち続けてしまうため、
     //自分自身をもう一度呼び出し、POSTをリセットする。
@@ -39,6 +42,17 @@ $posts = $db->query("SELECT m.name, m.picture, p.* FROM members m, posts p WHERE
 //今回はreadのため、SELECT文を使用。
 //members.nameとmembers.pictureを呼び出す。members.idとposts.member_idとが合致するところから。リレーションして取得する。
 //今回はmembersとpostsにそれぞれmとpのショートカット（エイリアス）をつけているため、mとpで呼び出しが可能。
+
+//?res= の部分がクリックされたら、つまりリクエストされたら返信の処理を実行
+if(isset($_REQUEST["res"])){
+  //返信の処理
+  $response = $db->prepare("SELECT m.name, m.picture, p.* FROM members m, posts p WHERE m.id=p.member_id AND p.id=?");
+  $response->execute(array(
+    $_REQUEST["res"]
+  ));
+  $table = $response->fetch();//ここの理解が浅い
+  $message = "@" . $table["name"] . " " . $table["message"];
+}
 ?>
 
 
@@ -64,10 +78,11 @@ $posts = $db->query("SELECT m.name, m.picture, p.* FROM members m, posts p WHERE
     </div>
     <form action="" method="post">
       <dl>
-        <dt><?php print(htmlspecialchars($member["name"],ENT_QUOTES));?>さん、メッセージをどうぞ</dt>
-        <dd>
-          <textarea name="message" cols="50" rows="5"></textarea>
-          <input type="hidden" name="reply_post_id" value="" />
+        <dt>
+        <?php print(htmlspecialchars($member["name"],ENT_QUOTES));?>さん、メッセージをどうぞ
+        </dt>
+        <dd><textarea name="message" cols="50" rows="5"><?php print(htmlspecialchars($message , ENT_QUOTES)) ;?></textarea>
+          <input type="hidden" name="reply_post_id" value="<?php print(htmlspecialchars($_REQUEST["res"],ENT_QUOTES))?>" />
         </dd>
       </dl>
       <div>
@@ -88,7 +103,7 @@ $posts = $db->query("SELECT m.name, m.picture, p.* FROM members m, posts p WHERE
       alt="<?php print(htmlspecialchars($post["name"],ENT_QUOTES)) ;?>" 
     />
     <p>
-      <?php print(htmlspecialchars($post["message"] , ENT_QUOTES)) ;?><span class="name">（<?php print(htmlspecialchars($post["name"] , ENT_QUOTES))?>）</span>[<a href="index.php?res=">Re</a>]
+      <?php print(htmlspecialchars($post["message"] , ENT_QUOTES)) ;?><span class="name">（<?php print(htmlspecialchars($post["name"] , ENT_QUOTES))?>）</span>[<a href="index.php?res=<?php print(htmlspecialchars($post["id"] , ENT_QUOTES))?>">Re</a>]
     </p>
     <p class="day">
       <a href="view.php?id=">
